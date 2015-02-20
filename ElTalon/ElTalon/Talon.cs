@@ -38,7 +38,7 @@ namespace ElTalon
             if (ObjectManager.Player.BaseSkinName != "Talon")
                 return;
 
-            AddNotification("ElTalon by jQuery v1.0.0.0");
+            AddNotification("ElTalon by jQuery v1.0.0.1");
 
             #region Spell Data
 
@@ -187,6 +187,7 @@ namespace ElTalon
             var eCombo = _menu.Item("ECombo").GetValue<bool>();
             var rCombo = _menu.Item("RCombo").GetValue<bool>();
             var ultCount = _menu.Item("rcount").GetValue<Slider>().Value;
+            var jqueryluckynumber = 400f;
 
             // Items (best var name EUW)
             var TiamatItem = _menu.Item("UseTiamat").GetValue<bool>();
@@ -195,7 +196,7 @@ namespace ElTalon
 
             foreach (var spell in SpellList.Where(x => x.IsReady()))
             {
-                if (spell.Slot == SpellSlot.Q && qCombo && Q.IsReady())
+                if (spell.Slot == SpellSlot.Q && qCombo && Player.Distance(target) <= jqueryluckynumber && Q.IsReady())
                 {
                     Q.CastOnUnit(Player);
                 }
@@ -204,6 +205,19 @@ namespace ElTalon
                 {
                     W.CastOnUnit(target);
                 }
+
+                   /* 
+                foreach (
+                        var t in
+                            ObjectManager.Get<Obj_Turret>()
+                                .Where(
+                                    turret =>
+                                        turret.IsEnemy && !turret.IsDead && turret.Health > 0 &&
+                                        turret.Position.Distance(ObjectManager.Player.Position) < turretRange))
+                    {
+                      //if
+                    }
+               */
 
                 if (spell.Slot == SpellSlot.E && eCombo && E.IsReady())
                 {
@@ -217,18 +231,17 @@ namespace ElTalon
                 }
 
                 /* item usage */
-
-                if (TiamatItem && Tiamat.IsReady())
+                if (TiamatItem && Player.Distance(target) <= jqueryluckynumber && Tiamat.IsReady())
                 {
                     Tiamat.Cast(Player);
                 }
 
-                if (HydraItem && Hydra.IsReady())
+                if (HydraItem && Player.Distance(target) <= jqueryluckynumber && Hydra.IsReady())
                 {
                     Hydra.Cast(Player);
                 }
 
-                if (Youmuuitem && Youmuu.IsReady())
+                if (Youmuuitem && Player.Distance(target) <= jqueryluckynumber && Youmuu.IsReady())
                 {
                     Youmuu.Cast(Player);
                 }
@@ -381,6 +394,10 @@ namespace ElTalon
             miscMenu.AddItem(new MenuItem("DrawW", "[Drawing] Draw W").SetValue(true));
             miscMenu.AddItem(new MenuItem("DrawE", "[Drawing] Draw E").SetValue(true));
             miscMenu.AddItem(new MenuItem("DrawR", "[Drawing] Draw R").SetValue(true));
+
+            //Supersecretsettings - soon
+            /*var supersecretsettings = _menu.AddSubMenu(new Menu("SuperSecretSettings", "supersecretsettings"));
+            supersecretsettings.AddItem(new MenuItem("DontEUnderTower", "[SSS] Dont E under tower").SetValue(false));*/
 
             //Here comes the moneyyy, money, money, moneyyyy
             var credits = _menu.AddSubMenu(new Menu("Credits", "jQuery"));
