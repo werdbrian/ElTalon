@@ -358,7 +358,7 @@ namespace ElTalon
             var harassMenu = _menu.AddSubMenu(new Menu("Harass", "H"));
             harassMenu.AddItem(new MenuItem("HarassQ", "[Harass] Use Q").SetValue(true));
             harassMenu.AddItem(new MenuItem("HarassW", "[Harass] Use W").SetValue(true));
-            harassMenu.AddItem(new MenuItem("HarassE", "[Harass] Use E").SetValue(true));
+            harassMenu.AddItem(new MenuItem("HarassE", "[Harass] Use E").SetValue(false));
 
             harassMenu.AddItem(new MenuItem("HarassActive", "Harass!").SetValue(new KeyBind("C".ToCharArray()[0], KeyBindType.Press)));
 
