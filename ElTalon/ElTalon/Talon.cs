@@ -30,6 +30,9 @@ namespace ElTalon
         // Summoner spells
         private static SpellSlot Ignite;
 
+        //this is godlike
+        private const float Jqueryluckynumber = 400f;
+
 
         #region Gameloaded 
 
@@ -38,7 +41,7 @@ namespace ElTalon
             if (ObjectManager.Player.BaseSkinName != "Talon")
                 return;
 
-            AddNotification("ElTalon by jQuery v1.0.0.1");
+            AddNotification("ElTalon by jQuery v1.1");
 
             #region Spell Data
 
@@ -65,6 +68,7 @@ namespace ElTalon
             //subscribe to event
             Game.OnGameUpdate += OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
+            Orbwalking.AfterAttack += AfterAttack;
         }
 
         #endregion
@@ -81,7 +85,6 @@ namespace ElTalon
 
                 case Orbwalking.OrbwalkingMode.Mixed:
                     Harass();
-                    Console.WriteLine("Harass");
                 break;
 
                 case Orbwalking.OrbwalkingMode.LaneClear:
@@ -101,9 +104,6 @@ namespace ElTalon
 
             if (Items.CanUseItem(3077))
                 Items.UseItem(3077);
-
-           /* if (Items.CanUseItem(3142))
-                Items.UseItem(3142);*/
         }
 
         #endregion
@@ -120,18 +120,21 @@ namespace ElTalon
             var wWaveClear = _menu.Item("WaveClearW").GetValue<bool>();
             var eWaveClear = _menu.Item("WaveClearE").GetValue<bool>();
 
-            if (qWaveClear && Q.IsReady())
+            if (Player.ManaPercentage() >= _menu.Item("LaneClearMana").GetValue<Slider>().Value)
             {
-                Q.Cast(Player);
-            }
+                if (qWaveClear && Q.IsReady())
+                {
+                    Q.Cast(Player);
+                }
 
-            if (wWaveClear && W.IsReady())
-            {
-                W.CastOnUnit(minion);
-            }
-            if (eWaveClear && E.IsReady())
-            {
-                E.CastOnUnit(minion);
+                if (wWaveClear && W.IsReady())
+                {
+                    W.CastOnUnit(minion);
+                }
+                if (eWaveClear && E.IsReady())
+                {
+                    E.CastOnUnit(minion);
+                }
             }
         }
 
@@ -153,24 +156,60 @@ namespace ElTalon
 
             foreach (var spell in SpellList.Where(y => y.IsReady()))
             {
-                if (spell.Slot == SpellSlot.Q && qHarass && Q.IsReady())
-                {   
-                    Q.Cast(Player);
-                }
+                if (Player.ManaPercentage() >= _menu.Item("HarassMana").GetValue<Slider>().Value)
+                {                             
+                   if (spell.Slot == SpellSlot.Q && qHarass && Q.IsReady() && Player.Distance(target) <= Jqueryluckynumber && Q.IsReady())
+                    {   
+                        Q.Cast(Player);
+                    }
 
-                if (spell.Slot == SpellSlot.W && wHarass && W.IsReady())
-                {
-                    W.CastOnUnit(target);
-                }
+                    if (spell.Slot == SpellSlot.W && wHarass && W.IsReady())
+                    {
+                        W.CastOnUnit(target);
+                    }
 
-                if (spell.Slot == SpellSlot.E && eHarass && E.IsReady())
-                {
-                    E.Cast(target);
+                    if (spell.Slot == SpellSlot.E && eHarass && E.IsReady())
+                    {
+                        E.Cast(target);
+                    }
                 }
             }
         }
 
         #endregion
+
+        #region itemusage
+
+        private static void fightItems()
+        {
+            var target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+
+            var TiamatItem = _menu.Item("UseTiamat").GetValue<bool>();
+            var HydraItem = _menu.Item("UseHydra").GetValue<bool>();
+   
+            if (Items.CanUseItem(3074) && HydraItem && Player.Distance(target) <= Jqueryluckynumber)
+                Items.UseItem(3074);
+
+            if (Items.CanUseItem(3077) && TiamatItem && Player.Distance(target) <= Jqueryluckynumber)
+                Items.UseItem(3077);
+        }
+
+        #endregion
+
+        private static void AfterAttack(AttackableUnit unit, AttackableUnit target)
+        {
+            switch (_orbwalker.ActiveMode)
+            {
+                case Orbwalking.OrbwalkingMode.Combo:
+                    if (unit.IsMe && Q.IsReady() && target is Obj_AI_Hero)
+                    {
+                        Q.Cast();
+                        fightItems();
+                        Orbwalking.ResetAutoAttackTimer();
+                    }
+                break;
+            }
+        }
 
         #region Combo
 
@@ -182,42 +221,19 @@ namespace ElTalon
                 return;
             }
 
-            var qCombo = _menu.Item("QCombo").GetValue<bool>();
             var wCombo = _menu.Item("WCombo").GetValue<bool>();
             var eCombo = _menu.Item("ECombo").GetValue<bool>();
             var rCombo = _menu.Item("RCombo").GetValue<bool>();
-            var ultCount = _menu.Item("rcount").GetValue<Slider>().Value;
-            var jqueryluckynumber = 400f;
-
-            // Items (best var name EUW)
-            var TiamatItem = _menu.Item("UseTiamat").GetValue<bool>();
-            var HydraItem = _menu.Item("UseHydra").GetValue<bool>();
             var Youmuuitem = _menu.Item("UseYoumuu").GetValue<bool>();
+            var ultCount = _menu.Item("rcount").GetValue<Slider>().Value;
 
             foreach (var spell in SpellList.Where(x => x.IsReady()))
             {
-                if (spell.Slot == SpellSlot.Q && qCombo && Player.Distance(target) <= jqueryluckynumber && Q.IsReady())
-                {
-                    Q.CastOnUnit(Player);
-                }
 
                 if (spell.Slot == SpellSlot.W && wCombo && W.IsReady())
                 {
                     W.CastOnUnit(target);
                 }
-
-                   /* 
-                foreach (
-                        var t in
-                            ObjectManager.Get<Obj_Turret>()
-                                .Where(
-                                    turret =>
-                                        turret.IsEnemy && !turret.IsDead && turret.Health > 0 &&
-                                        turret.Position.Distance(ObjectManager.Player.Position) < turretRange))
-                    {
-                      //if
-                    }
-               */
 
                 if (spell.Slot == SpellSlot.E && eCombo && E.IsReady())
                 {
@@ -230,18 +246,7 @@ namespace ElTalon
                     R.CastOnUnit(Player);
                 }
 
-                /* item usage */
-                if (TiamatItem && Player.Distance(target) <= jqueryluckynumber && Tiamat.IsReady())
-                {
-                    Tiamat.Cast(Player);
-                }
-
-                if (HydraItem && Player.Distance(target) <= jqueryluckynumber && Hydra.IsReady())
-                {
-                    Hydra.Cast(Player);
-                }
-
-                if (Youmuuitem && Player.Distance(target) <= jqueryluckynumber && Youmuu.IsReady())
+                if (Youmuuitem && Player.Distance(target) <= Jqueryluckynumber && Youmuu.IsReady())
                 {
                     Youmuu.Cast(Player);
                 }
@@ -358,42 +363,46 @@ namespace ElTalon
 
             //Combo
             var comboMenu = _menu.AddSubMenu(new Menu("Combo", "Combo"));
-            comboMenu.AddItem(new MenuItem("QCombo", "[Combo] Use Q").SetValue(true));
-            comboMenu.AddItem(new MenuItem("WCombo", "[Combo] Use W").SetValue(true));
-            comboMenu.AddItem(new MenuItem("ECombo", "[Combo] Use E").SetValue(true));
-            comboMenu.AddItem(new MenuItem("RCombo", "[Combo] Use R").SetValue(true));
+            comboMenu.AddItem(new MenuItem("fsfsafsaasffsadddd111dsasd", ""));
+            comboMenu.AddItem(new MenuItem("QCombo", "Use Q").SetValue(true));
+            comboMenu.AddItem(new MenuItem("WCombo", "Use W").SetValue(true));
+            comboMenu.AddItem(new MenuItem("ECombo", "Use E").SetValue(true));
+            comboMenu.AddItem(new MenuItem("RCombo", "Use R").SetValue(true));
+            comboMenu.AddItem(new MenuItem("fsfsafsaasffsa", ""));
             comboMenu.AddItem(new MenuItem("rcount", "Min target to R >= ")).SetValue(new Slider(1, 1, 5));
             comboMenu.AddItem(new MenuItem("UseIgnite", "Use Ignite in combo when killable").SetValue(true));
             comboMenu.AddItem(new MenuItem("ComboActive", "Combo!").SetValue(new KeyBind(32, KeyBindType.Press)));
 
+            comboMenu.SubMenu("Items").AddItem(new MenuItem("UseTiamat", "Use Tiamat").SetValue(true));
+            comboMenu.SubMenu("Items").AddItem(new MenuItem("UseHydra", "Use Hydra").SetValue(true));
+            comboMenu.SubMenu("Items").AddItem(new MenuItem("UseYoumuu", "Use Youmuu").SetValue(true));
 
             //Harass
             var harassMenu = _menu.AddSubMenu(new Menu("Harass", "H"));
-            harassMenu.AddItem(new MenuItem("HarassQ", "[Harass] Use Q").SetValue(true));
-            harassMenu.AddItem(new MenuItem("HarassW", "[Harass] Use W").SetValue(true));
-            harassMenu.AddItem(new MenuItem("HarassE", "[Harass] Use E").SetValue(false));
+            harassMenu.AddItem(new MenuItem("fsfsafsaasffsadddd", ""));
+            harassMenu.AddItem(new MenuItem("HarassQ", "Use Q").SetValue(true));
+            harassMenu.AddItem(new MenuItem("HarassW", "Use W").SetValue(true));
+            harassMenu.AddItem(new MenuItem("HarassE", "Use E").SetValue(false));
 
+            harassMenu.SubMenu("HarassMana").AddItem(new MenuItem("HarassMana", "[Harass] Minimum Mana").SetValue(new Slider(30, 0, 100)));
             harassMenu.AddItem(new MenuItem("HarassActive", "Harass!").SetValue(new KeyBind("C".ToCharArray()[0], KeyBindType.Press)));
 
             //Waveclear
             var waveClearMenu = _menu.AddSubMenu(new Menu("WaveClear", "waveclear"));
-            waveClearMenu.AddItem(new MenuItem("WaveClearQ", "[WaveClear] Use Q").SetValue(true));
-            waveClearMenu.AddItem(new MenuItem("WaveClearW", "[WaveClear] Use W").SetValue(true));
-            waveClearMenu.AddItem(new MenuItem("WaveClearE", "[WaveClear] Use E").SetValue(false));
-            waveClearMenu.AddItem(new MenuItem("WaveClearActive", "WaveClear!").SetValue(new KeyBind("V".ToCharArray()[0], KeyBindType.Press)));
+            waveClearMenu.AddItem(new MenuItem("fsfsafsaasffsadddd111", ""));
+            waveClearMenu.AddItem(new MenuItem("WaveClearQ", "Use Q").SetValue(true));
+            waveClearMenu.AddItem(new MenuItem("WaveClearW", "Use W").SetValue(true));
+            waveClearMenu.AddItem(new MenuItem("WaveClearE", "Use E").SetValue(false));
+            waveClearMenu.SubMenu("LaneClearMana").AddItem(new MenuItem("LaneClearMana", "[WaveClear] Minimum Mana").SetValue(new Slider(30, 0, 100)));
 
-            //Items
-            var itemMenu = _menu.AddSubMenu(new Menu("Items", "items"));
-            itemMenu.AddItem(new MenuItem("UseTiamat", "[Items] Use Tiamat").SetValue(true));
-            itemMenu.AddItem(new MenuItem("UseHydra", "[Items] Use Hydra").SetValue(true));
-            itemMenu.AddItem(new MenuItem("UseYoumuu", "[Items] Use Youmuu").SetValue(true));
+            waveClearMenu.AddItem(new MenuItem("WaveClearActive", "WaveClear!").SetValue(new KeyBind("V".ToCharArray()[0], KeyBindType.Press)));
 
             //Misc
             var miscMenu = _menu.AddSubMenu(new Menu("Drawings", "Misc"));
-            miscMenu.AddItem(new MenuItem("Drawingsoff", "[Drawing] Drawings off").SetValue(false));
-            miscMenu.AddItem(new MenuItem("DrawW", "[Drawing] Draw W").SetValue(true));
-            miscMenu.AddItem(new MenuItem("DrawE", "[Drawing] Draw E").SetValue(true));
-            miscMenu.AddItem(new MenuItem("DrawR", "[Drawing] Draw R").SetValue(true));
+            miscMenu.AddItem(new MenuItem("Drawingsoff", "Drawings off").SetValue(false));
+            miscMenu.AddItem(new MenuItem("DrawW", "Draw W").SetValue(true));
+            miscMenu.AddItem(new MenuItem("DrawE", "Draw E").SetValue(true));
+            miscMenu.AddItem(new MenuItem("DrawR", "Draw R").SetValue(true));
 
             //Supersecretsettings - soon
             /*var supersecretsettings = _menu.AddSubMenu(new Menu("SuperSecretSettings", "supersecretsettings"));
@@ -403,6 +412,7 @@ namespace ElTalon
             var credits = _menu.AddSubMenu(new Menu("Credits", "jQuery"));
             credits.AddItem(new MenuItem("Thanks", "Powered by:"));
             credits.AddItem(new MenuItem("jQuery", "jQuery"));
+            credits.AddItem(new MenuItem("fassfassf", ""));
             credits.AddItem(new MenuItem("Paypal", "Paypal:"));
             credits.AddItem(new MenuItem("Email", "info@zavox.nl"));
 
