@@ -41,7 +41,7 @@ namespace ElTalon
             if (ObjectManager.Player.BaseSkinName != "Talon")
                 return;
 
-            AddNotification("ElTalon by jQuery v1.1");
+            AddNotification("ElTalon by jQuery v1.2");
 
             #region Spell Data
 
