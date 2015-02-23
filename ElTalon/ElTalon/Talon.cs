@@ -364,6 +364,9 @@ namespace ElTalon
             if (_menu.Item("DrawR").GetValue<bool>())
                 if (E.Level > 0)
                     Utility.DrawCircle(Player.Position, R.Range, R.IsReady() ? Color.Green : Color.Red);
+       
+                Utility.HpBarDamageIndicator.DamageToUnit = GetComboDamage;
+                Utility.HpBarDamageIndicator.Enabled = _menu.Item("DrawComboDamage").GetValue<bool>();
         }
 
         #endregion
@@ -443,6 +446,8 @@ namespace ElTalon
             miscMenu.AddItem(new MenuItem("DrawW", "Draw W").SetValue(true));
             miscMenu.AddItem(new MenuItem("DrawE", "Draw E").SetValue(true));
             miscMenu.AddItem(new MenuItem("DrawR", "Draw R").SetValue(true));
+            miscMenu.AddItem(new MenuItem("DrawComboDamage", "Draw combo damage").SetValue(true));
+
 
             //Supersecretsettings - soon
             /*var supersecretsettings = _menu.AddSubMenu(new Menu("SuperSecretSettings", "supersecretsettings"));
