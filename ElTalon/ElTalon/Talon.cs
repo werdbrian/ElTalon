@@ -107,7 +107,7 @@ namespace ElTalon
             var eWaveClear = _menu.Item("WaveClearE").GetValue<bool>();
             var hydraClear = _menu.Item("HydraClear").GetValue<bool>();
             var tiamatClear = _menu.Item("TiamatClear").GetValue<bool>();
-            var farmLocation = MinionManager.GetBestCircularFarmLocation(MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Enemy).Select(m => m.ServerPosition.To2D()).ToList(), W.Width, W.Range);
+            var bestFarmLocation = MinionManager.GetBestCircularFarmLocation(MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.Enemy).Select(m => m.ServerPosition.To2D()).ToList(), W.Width, W.Range);
             var minions = MinionManager.GetMinions(Player.ServerPosition, W.Range, MinionTypes.All, MinionTeam.NotAlly);
 
             if (Player.ManaPercentage() >= _menu.Item("LaneClearMana").GetValue<Slider>().Value)
@@ -119,7 +119,7 @@ namespace ElTalon
 
                 if (wWaveClear && W.IsReady() && minion.IsValidTarget())
                 {
-                    W.Cast(farmLocation.Position);
+                    W.Cast(bestFarmLocation.Position);
                     //W.CastOnUnit(minion);
                 }
                 if (eWaveClear && E.IsReady())
@@ -162,7 +162,8 @@ namespace ElTalon
 
                     if (spell.Slot == SpellSlot.W && wHarass && W.IsReady())
                     {
-                        W.CastOnUnit(target);
+                        W.CastIfHitchanceEquals(target, HitChance.High);
+                        //W.CastOnUnit(target);
                     }
 
                     if (spell.Slot == SpellSlot.E && eHarass && E.IsReady())
