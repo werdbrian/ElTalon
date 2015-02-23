@@ -19,7 +19,7 @@ namespace ElTalon
 
         private static String hero = "Talon";
         private static Obj_AI_Hero Player { get { return ObjectManager.Player; } }
-        private static Menu _menu;
+        public static Menu _menu;
         private static Orbwalking.Orbwalker _orbwalker;
         private static Spell Q, W, E, R;
         private static List<Spell> SpellList;
@@ -41,7 +41,7 @@ namespace ElTalon
             if (ObjectManager.Player.BaseSkinName != "Talon")
                 return;
 
-            Notifications.AddNotification("ElTalon by jQuery v1.2");
+            Notifications.AddNotification("ElTalon by jQuery v1.3", 5);
 
             #region Spell Data
 
@@ -70,6 +70,7 @@ namespace ElTalon
             Drawing.OnDraw += Drawing_OnDraw;
             Orbwalking.AfterAttack += AfterAttack;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
+            new AssassinManager();
         }
 
         #endregion
@@ -214,11 +215,12 @@ namespace ElTalon
 
         private static void Combo()
         {
-            var target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+            var target = GetEnemy(W.Range, TargetSelector.DamageType.Physical);
             if (target == null || !target.IsValid)
             {
                 return;
             }
+
 
             var wCombo = _menu.Item("WCombo").GetValue<bool>();
             var eCombo = _menu.Item("ECombo").GetValue<bool>();
@@ -233,19 +235,18 @@ namespace ElTalon
 
             foreach (var spell in SpellList.Where(x => x.IsReady()))
             {
-
-                if (spell.Slot == SpellSlot.W && wCombo && W.IsReady())
+                if (target != null && spell.Slot == SpellSlot.W && wCombo && W.IsReady())
                 {
                     W.CastOnUnit(target);
                 }
 
-                if (spell.Slot == SpellSlot.E && eCombo && E.IsReady())
+                if (target != null && spell.Slot == SpellSlot.E && eCombo && E.IsReady())
                 {
                     E.CastOnUnit(target);
                 }
 
                 //only kill with ult
-                if (onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
+                if (target != null &&  onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
                 {
                     if (comboDamage >= target.Health)
                     {
@@ -254,7 +255,7 @@ namespace ElTalon
                 }
 
                 // When fighting and target can we killed with ult it will ult
-                if (onlyKill && R.IsReady() && smartUlt)
+                if (target != null &&  onlyKill && R.IsReady() && smartUlt)
                 {
                     if (getUltComboDamage >= target.Health)
                     {
@@ -263,7 +264,7 @@ namespace ElTalon
                 }
 
                 //not active
-                if (!onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
+                if (target != null &&  !onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
                 {
                     R.CastOnUnit(Player);
                 }
@@ -385,6 +386,39 @@ namespace ElTalon
 
         #endregion
 
+        private static Obj_AI_Hero GetEnemy(float vDefaultRange = 0, TargetSelector.DamageType vDefaultDamageType = TargetSelector.DamageType.Physical)
+        {
+            if (Math.Abs(vDefaultRange) < 0.00001)
+                vDefaultRange = Q.Range;
+
+            if (!_menu.Item("AssassinActive").GetValue<bool>())
+                return TargetSelector.GetTarget(vDefaultRange, vDefaultDamageType);
+
+            var assassinRange = _menu.Item("AssassinSearchRange").GetValue<Slider>().Value;
+
+            var vEnemy =
+                ObjectManager.Get<Obj_AI_Hero>()
+                    .Where(
+                        enemy =>
+                            enemy.Team != ObjectManager.Player.Team && !enemy.IsDead && enemy.IsVisible &&
+                            _menu.Item("Assassin" + enemy.ChampionName) != null &&
+                            _menu.Item("Assassin" + enemy.ChampionName).GetValue<bool>() &&
+                            ObjectManager.Player.Distance(enemy) < assassinRange);
+
+            if (_menu.Item("AssassinSelectOption").GetValue<StringList>().SelectedIndex == 1)
+            {
+                vEnemy = (from vEn in vEnemy select vEn).OrderByDescending(vEn => vEn.MaxHealth);
+            }
+
+            Obj_AI_Hero[] objAiHeroes = vEnemy as Obj_AI_Hero[] ?? vEnemy.ToArray();
+
+            Obj_AI_Hero t = !objAiHeroes.Any()
+                ? TargetSelector.GetTarget(vDefaultRange, vDefaultDamageType)
+                : objAiHeroes[0];
+
+            return t;
+        }
+
         #region Menu
 
         private static void InitializeMenu()
@@ -418,6 +452,9 @@ namespace ElTalon
             comboMenu.SubMenu("Items").AddItem(new MenuItem("UseTiamat", "Use Tiamat").SetValue(true));
             comboMenu.SubMenu("Items").AddItem(new MenuItem("UseHydra", "Use Hydra").SetValue(true));
             comboMenu.SubMenu("Items").AddItem(new MenuItem("UseYoumuu", "Use Youmuu").SetValue(true));
+
+           // var comboMenu = _menu.AddSubMenu(new Menu("Combo", "Combo"));
+
 
             //Harass
             var harassMenu = _menu.AddSubMenu(new Menu("Harass", "H"));
@@ -462,11 +499,13 @@ namespace ElTalon
 
             //Here comes the moneyyy, money, money, moneyyyy
             var credits = _menu.AddSubMenu(new Menu("Credits", "jQuery"));
-            credits.AddItem(new MenuItem("Thanks", "Powered by:"));
-            credits.AddItem(new MenuItem("jQuery", "jQuery"));
-            credits.AddItem(new MenuItem("fassfassf", ""));
-            credits.AddItem(new MenuItem("Paypal", "Paypal:"));
+            credits.AddItem(new MenuItem("Paypal", "if you would like to donate via paypal:"));
             credits.AddItem(new MenuItem("Email", "info@zavox.nl"));
+
+
+            _menu.AddItem(new MenuItem("422442fsaafs4242f", ""));
+            _menu.AddItem(new MenuItem("422442fsaafsf", "Version: 1.3"));
+            _menu.AddItem(new MenuItem("fsasfafsfsafsa", "Made By jQuery"));
 
             _menu.AddToMainMenu();
         }
