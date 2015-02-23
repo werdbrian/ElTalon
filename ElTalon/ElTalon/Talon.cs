@@ -41,7 +41,7 @@ namespace ElTalon
             if (ObjectManager.Player.BaseSkinName != "Talon")
                 return;
 
-            AddNotification("ElTalon by jQuery v1.2");
+            Notifications.AddNotification("ElTalon by jQuery v1.2");
 
             #region Spell Data
 
@@ -69,6 +69,7 @@ namespace ElTalon
             Game.OnGameUpdate += OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             Orbwalking.AfterAttack += AfterAttack;
+            AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
         }
 
         #endregion
@@ -300,6 +301,19 @@ namespace ElTalon
 
         #endregion
 
+        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
+        {
+            var AntiGapActive = _menu.Item("Antigap").GetValue<bool>();
+            var target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+            if (target == null || !target.IsValid)
+            {
+                return;
+            }
+
+            if (AntiGapActive && E.IsReady() && gapcloser.Sender.Distance(Player) < 700)
+                E.Cast(target);
+        }
+
 
         #region GetComboDamage   
 
@@ -371,17 +385,6 @@ namespace ElTalon
 
         #endregion
 
-
-        #region Notification
-
-        public static void AddNotification(String text)
-        {
-            var notification = new Notification(text, 10000);
-            Notifications.AddNotification(notification);
-        }
-
-        #endregion
-
         #region Menu
 
         private static void InitializeMenu()
@@ -434,7 +437,11 @@ namespace ElTalon
             waveClearMenu.AddItem(new MenuItem("WaveClearE", "Use E").SetValue(false));
             waveClearMenu.SubMenu("LaneClearMana").AddItem(new MenuItem("LaneClearMana", "[WaveClear] Minimum Mana").SetValue(new Slider(30, 0, 100)));
             waveClearMenu.AddItem(new MenuItem("fsfsafsaasffsadddd11sss1", ""));
-            
+
+            // Settings
+            var settingsMenu = _menu.AddSubMenu(new Menu("SuperSecretSettings", "SuperSecretSettings"));
+            settingsMenu.AddItem(new MenuItem("Antigap", "[BETA] Use E for gapclosers").SetValue(false));
+
             // item usage
             waveClearMenu.SubMenu("Items").AddItem(new MenuItem("HydraClear", "Use hydra").SetValue(true));
             waveClearMenu.SubMenu("Items").AddItem(new MenuItem("TiamatClear", "Use tiamat").SetValue(true));
