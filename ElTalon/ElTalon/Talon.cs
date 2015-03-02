@@ -128,13 +128,13 @@ namespace ElTalon
                 {
                     E.CastOnUnit(Target);
                 }
-
-                if (Items.CanUseItem(3074) && hydraClear && Target.IsValidTarget(Hydra.Range))
-                    Items.UseItem(3074);
-
-                if (Items.CanUseItem(3077) && tiamatClear && Target.IsValidTarget(Tiamat.Range))
-                    Items.UseItem(3077);
             }
+
+            if (Items.CanUseItem(3074) && hydraClear && Target.IsValidTarget(Hydra.Range))
+                Items.UseItem(3074);
+
+            if (Items.CanUseItem(3077) && tiamatClear && Target.IsValidTarget(Tiamat.Range))
+                Items.UseItem(3077);
         }
 
         private static void LaneClear()
@@ -166,13 +166,13 @@ namespace ElTalon
                 {
                     E.CastOnUnit(minion);
                 }
-
-                if (Items.CanUseItem(3074) && hydraClear && minion.IsValidTarget(Hydra.Range) && minions.Count() > 1)
-                    Items.UseItem(3074);
-
-                if (Items.CanUseItem(3077) && tiamatClear && minion.IsValidTarget(Tiamat.Range) && minions.Count() > 1)
-                    Items.UseItem(3077);
             }
+
+            if (Items.CanUseItem(3074) && hydraClear && minion.IsValidTarget(Hydra.Range) && minions.Count() > 1)
+                Items.UseItem(3074);
+
+            if (Items.CanUseItem(3077) && tiamatClear && minion.IsValidTarget(Tiamat.Range) && minions.Count() > 1)
+                Items.UseItem(3077);
         }
 
         #endregion  
