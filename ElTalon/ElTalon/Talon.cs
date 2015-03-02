@@ -41,7 +41,7 @@ namespace ElTalon
             if (ObjectManager.Player.BaseSkinName != "Talon")
                 return;
 
-            Notifications.AddNotification("ElTalon by jQuery v1.3", 5);
+            Notifications.AddNotification("ElTalon by jQuery v1.4", 5);
 
             #region Spell Data
 
@@ -91,13 +91,51 @@ namespace ElTalon
 
                 case Orbwalking.OrbwalkingMode.LaneClear:
                     LaneClear();
-               break;
+                    JungleClear();
+                    break;
             }
         }
 
         #endregion
 
-        #region Harass
+        #region LaneClear
+
+        private static void JungleClear()
+        {
+            var qWaveClear = _menu.Item("WaveClearQ").GetValue<bool>();
+            var wWaveClear = _menu.Item("WaveClearW").GetValue<bool>();
+            var eWaveClear = _menu.Item("WaveClearE").GetValue<bool>();
+            var hydraClear = _menu.Item("HydraClear").GetValue<bool>();
+            var tiamatClear = _menu.Item("TiamatClear").GetValue<bool>();
+
+            var Target = MinionManager.GetMinions(
+                Player.Position, 700, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth).FirstOrDefault();
+
+
+            if (Player.ManaPercentage() >= _menu.Item("LaneClearMana").GetValue<Slider>().Value)
+            {
+                if (qWaveClear && Q.IsReady() && Target.IsValidTarget())
+                {
+                    Q.Cast(Player);
+                }
+
+                if (wWaveClear && W.IsReady() && Target.IsValidTarget())
+                {
+                    W.Cast(Target);
+                }
+
+                if (eWaveClear && E.IsReady())
+                {
+                    E.CastOnUnit(Target);
+                }
+
+                if (Items.CanUseItem(3074) && hydraClear && Target.IsValidTarget(Hydra.Range))
+                    Items.UseItem(3074);
+
+                if (Items.CanUseItem(3077) && tiamatClear && Target.IsValidTarget(Tiamat.Range))
+                    Items.UseItem(3077);
+            }
+        }
 
         private static void LaneClear()
         {
@@ -157,7 +195,7 @@ namespace ElTalon
             {
                 if (Player.ManaPercentage() >= _menu.Item("HarassMana").GetValue<Slider>().Value)
                 {                             
-                   if (spell.Slot == SpellSlot.Q && qHarass && Q.IsReady() && Player.Distance(target) <= Jqueryluckynumber && Q.IsReady())
+                   if (spell.Slot == SpellSlot.Q && qHarass && Q.IsReady() && Player.Distance(target) <= Player.AttackRange && Q.IsReady())
                     {   
                         Q.Cast(Player);
                     }
@@ -221,7 +259,6 @@ namespace ElTalon
                 return;
             }
 
-
             var wCombo = _menu.Item("WCombo").GetValue<bool>();
             var eCombo = _menu.Item("ECombo").GetValue<bool>();
             var rCombo = _menu.Item("RCombo").GetValue<bool>();
@@ -232,6 +269,7 @@ namespace ElTalon
 
             var comboDamage = GetComboDamage(target);
             var getUltComboDamage = GetUltComboDamage(target);
+            var smarterult = betaDamage(target);
 
             foreach (var spell in SpellList.Where(x => x.IsReady()))
             {
@@ -255,7 +293,7 @@ namespace ElTalon
                 }
 
                 // When fighting and target can we killed with ult it will ult
-                if (target != null &&  onlyKill && R.IsReady() && smartUlt)
+                if (target != null && onlyKill && R.IsReady() && smartUlt)
                 {
                     if (getUltComboDamage >= target.Health)
                     {
@@ -264,7 +302,7 @@ namespace ElTalon
                 }
 
                 //not active
-                if (target != null &&  !onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
+                if (target != null && !onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
                 {
                     R.CastOnUnit(Player);
                 }
@@ -281,6 +319,32 @@ namespace ElTalon
             {
                 Player.Spellbook.CastSpell(Ignite, target);
             }
+        }
+
+        #endregion
+
+        #region betaDamage   
+
+        private static float betaDamage(Obj_AI_Base enemy)
+        {
+            var damage = 0d;
+
+            if (Q.IsReady())
+            {
+                damage += Player.GetSpellDamage(enemy, SpellSlot.Q);
+            }
+
+            if (W.IsReady())
+            {
+                damage += Player.GetSpellDamage(enemy, SpellSlot.W);
+            }
+
+            if (E.IsReady())
+            {
+                damage += Player.GetSpellDamage(enemy, SpellSlot.E);
+            }
+
+            return (float)damage;
         }
 
         #endregion
@@ -360,31 +424,6 @@ namespace ElTalon
 
         #endregion
 
-        #region Drawings
-
-        private static void Drawing_OnDraw(EventArgs args)
-        {
-
-            if (_menu.Item("Drawingsoff").GetValue<bool>())
-                return;
-
-            if (_menu.Item("DrawW").GetValue<bool>())
-                if (W.Level > 0)
-                    Utility.DrawCircle(Player.Position, W.Range, W.IsReady() ? Color.Green : Color.Red);
-
-            if (_menu.Item("DrawE").GetValue<bool>())
-                if (E.Level > 0)
-                    Utility.DrawCircle(Player.Position, E.Range, E.IsReady() ? Color.Green : Color.Red);
-
-            if (_menu.Item("DrawR").GetValue<bool>())
-                if (E.Level > 0)
-                    Utility.DrawCircle(Player.Position, R.Range, R.IsReady() ? Color.Green : Color.Red);
-       
-                Utility.HpBarDamageIndicator.DamageToUnit = GetComboDamage;
-                Utility.HpBarDamageIndicator.Enabled = _menu.Item("DrawComboDamage").GetValue<bool>();
-        }
-
-        #endregion
 
         private static Obj_AI_Hero GetEnemy(float vDefaultRange = 0, TargetSelector.DamageType vDefaultDamageType = TargetSelector.DamageType.Physical)
         {
@@ -453,9 +492,6 @@ namespace ElTalon
             comboMenu.SubMenu("Items").AddItem(new MenuItem("UseHydra", "Use Hydra").SetValue(true));
             comboMenu.SubMenu("Items").AddItem(new MenuItem("UseYoumuu", "Use Youmuu").SetValue(true));
 
-           // var comboMenu = _menu.AddSubMenu(new Menu("Combo", "Combo"));
-
-
             //Harass
             var harassMenu = _menu.AddSubMenu(new Menu("Harass", "H"));
             harassMenu.AddItem(new MenuItem("fsfsafsaasffsadddd", ""));
@@ -486,11 +522,17 @@ namespace ElTalon
 
             //Misc
             var miscMenu = _menu.AddSubMenu(new Menu("Drawings", "Misc"));
-            miscMenu.AddItem(new MenuItem("Drawingsoff", "Drawings off").SetValue(false));
-            miscMenu.AddItem(new MenuItem("DrawW", "Draw W").SetValue(true));
-            miscMenu.AddItem(new MenuItem("DrawE", "Draw E").SetValue(true));
-            miscMenu.AddItem(new MenuItem("DrawR", "Draw R").SetValue(true));
-            miscMenu.AddItem(new MenuItem("DrawComboDamage", "Draw combo damage").SetValue(true));
+            miscMenu.AddItem(new MenuItem("ElTalon.Drawingsoff", "Drawings off").SetValue(false));
+            miscMenu.AddItem(new MenuItem("ElTalon.DrawW", "Draw W").SetValue(new Circle()));
+            miscMenu.AddItem(new MenuItem("ElTalon.DrawE", "Draw E").SetValue(new Circle()));
+            miscMenu.AddItem(new MenuItem("ElTalon.DrawR", "Draw R").SetValue(new Circle()));
+
+            var dmgAfterComboItem = new MenuItem("ElTalon.DrawComboDamage", "Draw combo damage").SetValue(true);
+            miscMenu.AddItem(dmgAfterComboItem);
+
+            Utility.HpBarDamageIndicator.DamageToUnit = GetComboDamage;
+            Utility.HpBarDamageIndicator.Enabled = dmgAfterComboItem.GetValue<bool>();
+            dmgAfterComboItem.ValueChanged += delegate (object sender, OnValueChangeEventArgs eventArgs) { Utility.HpBarDamageIndicator.Enabled = eventArgs.GetNewValue<bool>(); };
 
 
             //Supersecretsettings - soon
@@ -504,12 +546,38 @@ namespace ElTalon
 
 
             _menu.AddItem(new MenuItem("422442fsaafs4242f", ""));
-            _menu.AddItem(new MenuItem("422442fsaafsf", "Version: 1.3"));
+            _menu.AddItem(new MenuItem("422442fsaafsf", "Version: 1.4"));
             _menu.AddItem(new MenuItem("fsasfafsfsafsa", "Made By jQuery"));
 
             _menu.AddToMainMenu();
         }
 
+        #endregion
+
+        #region Drawings
+
+        private static void Drawing_OnDraw(EventArgs args)
+        {
+            var drawOff = _menu.Item("ElTalon.Drawingsoff").GetValue<bool>();
+            var drawE = _menu.Item("ElTalon.DrawE").GetValue<Circle>();
+            var drawW = _menu.Item("ElTalon.DrawW").GetValue<Circle>();
+            var drawR = _menu.Item("ElTalon.DrawR").GetValue<Circle>();
+
+            if (drawOff)
+                return;
+
+            if (drawW.Active)
+                if (W.Level > 0)
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, W.Range, W.IsReady() ? Color.Green : Color.Red);
+
+            if (drawE.Active)
+                if (E.Level > 0)
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, E.Range, E.IsReady() ? Color.Green : Color.Red);
+
+            if (drawR.Active)
+                if (R.Level > 0)
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, R.Range, R.IsReady() ? Color.Green : Color.Red);
+        }
         #endregion
     }
 }
