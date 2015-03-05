@@ -66,7 +66,7 @@ namespace ElTalon
             #endregion
 
             //subscribe to event
-            Game.OnGameUpdate += OnGameUpdate;
+            Game.OnUpdate += OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             Orbwalking.AfterAttack += AfterAttack;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
@@ -222,13 +222,13 @@ namespace ElTalon
         {
             var target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
 
-            var TiamatItem = _menu.Item("UseTiamat").GetValue<bool>();
-            var HydraItem = _menu.Item("UseHydra").GetValue<bool>();
+            var tiamatItem = _menu.Item("UseTiamat").GetValue<bool>();
+            var hydraItem = _menu.Item("UseHydra").GetValue<bool>();
    
-            if (Items.CanUseItem(3074) && HydraItem && Player.Distance(target) <= Jqueryluckynumber)
+            if (Items.CanUseItem(3074) && hydraItem && Player.Distance(target) <= Jqueryluckynumber)
                 Items.UseItem(3074);
 
-            if (Items.CanUseItem(3077) && TiamatItem && Player.Distance(target) <= Jqueryluckynumber)
+            if (Items.CanUseItem(3077) && tiamatItem && Player.Distance(target) <= Jqueryluckynumber)
                 Items.UseItem(3077);
         }
 
@@ -241,8 +241,8 @@ namespace ElTalon
                 case Orbwalking.OrbwalkingMode.Combo:
                     if (unit.IsMe && Q.IsReady() && target is Obj_AI_Hero)
                     {
-                        Q.Cast();
                         fightItems();
+                        Q.Cast(); 
                         Orbwalking.ResetAutoAttackTimer();
                     }
                 break;
@@ -283,7 +283,6 @@ namespace ElTalon
                     E.CastOnUnit(target);
                 }
 
-                //only kill with ult
                 if (target != null &&  onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
                 {
                     if (comboDamage >= target.Health)
@@ -292,7 +291,6 @@ namespace ElTalon
                     }
                 }
 
-                // When fighting and target can we killed with ult it will ult
                 if (target != null && onlyKill && R.IsReady() && smartUlt)
                 {
                     if (getUltComboDamage >= target.Health)
@@ -301,7 +299,6 @@ namespace ElTalon
                     }
                 }
 
-                //not active
                 if (target != null && !onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
                 {
                     R.CastOnUnit(Player);
@@ -546,7 +543,7 @@ namespace ElTalon
 
 
             _menu.AddItem(new MenuItem("422442fsaafs4242f", ""));
-            _menu.AddItem(new MenuItem("422442fsaafsf", "Version: 1.4"));
+            _menu.AddItem(new MenuItem("422442fsaafsf", "Version: 1.5"));
             _menu.AddItem(new MenuItem("fsasfafsfsafsa", "Made By jQuery"));
 
             _menu.AddToMainMenu();
