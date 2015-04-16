@@ -200,15 +200,14 @@ namespace ElTalon
                         Q.Cast(Player);
                     }
 
+                    if (spell.Slot == SpellSlot.E && eHarass && E.IsReady())
+                    {
+                        E.Cast(target);
+                    }
                     if (spell.Slot == SpellSlot.W && wHarass && W.IsReady())
                     {
                         W.CastIfHitchanceEquals(target, HitChance.High);
                         //W.CastOnUnit(target);
-                    }
-
-                    if (spell.Slot == SpellSlot.E && eHarass && E.IsReady())
-                    {
-                        E.Cast(target);
                     }
                 }
             }
@@ -273,16 +272,14 @@ namespace ElTalon
 
             foreach (var spell in SpellList.Where(x => x.IsReady()))
             {
-                if (target != null && spell.Slot == SpellSlot.W && wCombo && W.IsReady())
-                {
-                    W.CastOnUnit(target);
-                }
-
                 if (target != null && spell.Slot == SpellSlot.E && eCombo && E.IsReady())
                 {
                     E.CastOnUnit(target);
                 }
-
+                if (target != null && spell.Slot == SpellSlot.W && wCombo && W.IsReady())
+                {
+                    W.CastOnUnit(target);
+                }
                 if (target != null &&  onlyKill && E.IsReady() && rCombo && Q.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(R.Range)) >= ultCount)
                 {
                     if (comboDamage >= target.Health)
